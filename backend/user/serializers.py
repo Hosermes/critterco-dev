@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model, authenticate
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
+from django.contrib.auth.models import Group
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,13 +19,30 @@ class UserSerializer(serializers.ModelSerializer):
             "phone",
             "member_since",
         )
-        read_only_fields = ["id", "is_staff"]
+        read_only_fields = [
+            "id",
+            "is_staff",
+        ]
 
         extra_kwargs = {"password": {"write_only": True, "min_length": 5}}
 
+    def get_full_name(self):
+        """Gets full name of user"""
+        return "%s %s" % (self.name, self.last_name)
+
+    def get_short_name(self):
+        """Gets user's first name"""
+        return self.name
+
     def create(self, validated_data):
         """Create a new user with encrypted password and return it"""
-        return get_user_model().objects.create_user(**validated_data)
+        member_check = Group.objects.get_or_create(name="member")
+        member_group = Group.objects.get(name="member")
+        user = get_user_model().objects.create(**validated_data)
+        user.set_password(validated_data["password"])
+        member_group.user_set.add(user)
+        user.save()
+        return user
 
     def update(self, instance, validated_data):
         """Update a user, settin the password correctly and return it"""

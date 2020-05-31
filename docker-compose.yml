@@ -9,15 +9,13 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/backend
-    command: >
-      sh -c " python manage.py wait_for_db &&
-              python manage.py migrate &&
-              python manage.py runserver 0.0.0.0:8000"
+    command: ["./wait-for-it.sh", "db:5432", "--", "./start-up.sh"]
     environment:
       - DB_HOST=${DB_HOST}
       - DB_NAME=${POSTGRES_DB}
       - DB_USER=${POSTGRES_USER}
       - DB_PASS=${POSTGRES_PASSWORD}
+      - TZ=Asia/Tehran
     depends_on:
       - db
 
@@ -28,29 +26,50 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: always
-    depends_on:
-      - db
-    ports:
-      - 5050:80
-    ## you can change pgAdmin default username/password with below environment variables
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
 
-  frontend:
-    build:
-      context: ./frontend/
-    command: npm run serve
-    volumes:
-      - ./frontend/:/usr/app
-      - /usr/app/node_modules
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "0.0.0.0:80:80"
     depends_on:
       - backend
+    volumes:
+      - ./nginx/dev.conf:/etc/nginx/nginx.conf:ro
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/app
+      - "/app/node_modules"
     ports:
-      - "8080:8080"
+      - "8081:8080"
+    depends_on:
+      - backend
+      
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   depends_on:
+  #     - db
+  #   ports:
+  #     - 5050:80
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    command: -H tcp://tasks.agent:9001 --tlsskipverify
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - C:\ProgramData\Portainer:/data
 
 volumes:
+  staticfiles_root:
+  portainer_data:
   postgis_data: {}
