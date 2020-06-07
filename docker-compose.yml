@@ -2,6 +2,7 @@ version: "3"
 
 services:
   backend:
+    container_name: backend
     build:
       context: .
       dockerfile: ./backend/Dockerfile
@@ -9,7 +10,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/backend
-    command: ["./wait-for-it.sh", "db:5432", "--", "./start-up.sh"]
+    command: ["./scripts/wait-for-it.sh", "db:5432", "--", "./scripts/start-up.sh"]
     environment:
       - DB_HOST=${DB_HOST}
       - DB_NAME=${POSTGRES_DB}
@@ -37,6 +38,13 @@ services:
     volumes:
       - ./nginx/dev.conf:/etc/nginx/nginx.conf:ro
 
+  redis:
+    restart: always
+    image: redis:6.0.4-alpine
+    ports:
+      - "6379:6379"
+
+
   frontend:
     container_name: frontend
     build:
@@ -49,6 +57,18 @@ services:
     depends_on:
       - backend
       
+  redis-commander:
+    container_name: redis-commander
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+      - REDIS_HOST=redis
+    ports:
+      - "8085:8081"
+    depends_on:
+          - "redis"
+    
   # pgadmin:
   #   image: dpage/pgadmin4
   #   depends_on:
@@ -62,12 +82,11 @@ services:
   portainer:
     image: portainer/portainer
     container_name: portainer
-    command: -H tcp://tasks.agent:9001 --tlsskipverify
     ports:
       - "9000:9000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - C:\ProgramData\Portainer:/data
+      - /portainer_data:/data
 
 volumes:
   staticfiles_root:

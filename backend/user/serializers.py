@@ -1,5 +1,4 @@
-from django.contrib.auth import get_user_model, authenticate
-from django.utils.translation import ugettext_lazy as _
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from django.contrib.auth.models import Group
 
@@ -26,17 +25,17 @@ class UserSerializer(serializers.ModelSerializer):
 
         extra_kwargs = {"password": {"write_only": True, "min_length": 5}}
 
-    def get_full_name(self):
-        """Gets full name of user"""
-        return "%s %s" % (self.name, self.last_name)
-
-    def get_short_name(self):
-        """Gets user's first name"""
-        return self.name
+    # def get_full_name(self):
+    #     """Gets full name of user"""
+    #     return "%s %s" % (self.name, self.last_name)
+    # These two functions must be tested and rewritten.
+    # def get_short_name(self):
+    #     """Gets user's first name"""
+    #     return self.name
 
     def create(self, validated_data):
         """Create a new user with encrypted password and return it"""
-        member_check = Group.objects.get_or_create(name="member")
+        member_check = Group.objects.get_or_create(name="member")  # noqa: F841
         member_group = Group.objects.get(name="member")
         user = get_user_model().objects.create(**validated_data)
         user.set_password(validated_data["password"])
@@ -54,26 +53,3 @@ class UserSerializer(serializers.ModelSerializer):
             user.save()
 
         return user
-
-
-class AuthTokenSerializer(serializers.Serializer):
-    """Serializer for the user authentication object"""
-
-    email = serializers.CharField()
-    password = serializers.CharField(
-        style={"input_type": "password"}, trim_whitespace=False
-    )
-
-    def validate(self, attrs):
-        """Validate and authenticate the user"""
-        email = attrs.get("email")
-        password = attrs.get("password")
-
-        user = authenticate(
-            request=self.context.get("request"), username=email, password=password
-        )
-        if not user:
-            msg = _("Unable to authenticate with provided credentials")
-            raise serializers.ValidationError(msg, code="authentication")
-        attrs["user"] = user
-        return attrs

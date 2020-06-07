@@ -1,13 +1,15 @@
-from django.utils.translation import ugettext_lazy as _
-from rest_framework import viewsets, permissions, authentication, serializers
-from rest_framework.permissions import DjangoModelPermissions
+from rest_framework import viewsets
 from rest_framework_gis.filters import DistanceToPointFilter
 from .models import Biz, Hours
-from .permissions import HasGroupPermission
+from core.permissions import HasGroupPermission
 from .serializers import BizSerializer, HoursSerializer
+from rest_framework_extensions.cache.mixins import CacheResponseMixin
 
 # Biz serializer views.
-class BizViewSet(viewsets.ModelViewSet):
+
+
+class BizViewSet(CacheResponseMixin, viewsets.ModelViewSet):
+
     queryset = Biz.objects.all()
     distance_filter_field = "location"
     distance_filter_convert_meters = True

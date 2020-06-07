@@ -20,8 +20,9 @@ urlpatterns = [
         include("django_rest_passwordreset.urls", namespace="password_reset"),
     ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += [url(r"^api/silk/", include("silk.urls", namespace="silk"))]
 
 if settings.DEBUG:
     import debug_toolbar
 
-    urlpatterns = [path("__debug__/", include(debug_toolbar.urls)),] + urlpatterns
+    urlpatterns = [path("__debug__/", include(debug_toolbar.urls)), ] + urlpatterns
