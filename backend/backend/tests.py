@@ -39,10 +39,10 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_gis",
     # My internal django apps.
-    "biz",
-    "comments",
-    "core",
-    "user",
+    "apps.biz",
+    "apps.comments",
+    "apps.core",
+    "apps.user",
 ]
 
 MIDDLEWARE = [
@@ -63,7 +63,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -158,6 +158,18 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_THROTTLE_RATES": {"anon": "100/day", "user": "1000/day"},
 }
+
+# Celery Configuration
+
+CELERY_BROKER_BACKEND = 'memory'
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+
+# CELERY_BROKER_URL = 'redis://redis:6379'
+# CELERY_RESULT_BACKEND = 'redis://redis:6379'
+# CELERY_ACCEPT_CONTENT = ['application/json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_SERIALIZER = 'json'
 
 # IPs and ports allowed for CORS origin.
 CORS_ORIGIN_WHITELIST = ("http://localhost:8080", "http://localhost:8081")

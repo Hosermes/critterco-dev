@@ -5,6 +5,10 @@ python:
 services: 
     - docker
 
+env:
+    # Backend variables for db connection.
+    - DB_HOST=db BACKEND_SECRET=dev_secret POSTGRES_DB=app POSTGRES_USER=postgres POSTGRES_PASSWORD=postgres PGADMIN_DEFAULT_EMAIL=test PGADMIN_DEFAULT_PASSWORD=password
+
 before_script: pip install docker-compose
 
 script:

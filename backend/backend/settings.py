@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "^he)jvl5su2g_ep(z(ateuxw0ouftnc%jo-c*2gljw4j7blkrt"
+SECRET_KEY = os.environ.get("BACKEND_SECRET")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -39,17 +39,16 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_gis",
     # My internal django apps.
-    "biz",
-    "comments",
-    "core",
-    "user",
+    "apps.biz",
+    "apps.comments",
+    "apps.core",
+    "apps.user",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "silk.middleware.SilkyMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -63,7 +62,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -118,6 +117,15 @@ CACHES = {
     }
 }
 
+# Celery Configuration
+
+CELERY_BROKER_URL = 'redis://redis:6379'
+CELERY_RESULT_BACKEND = 'redis://redis:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
@@ -141,7 +149,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 STATIC_URL = "/static/"
 
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "core/static"),)
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "apps/core/static"),)
 # Media configs.
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
@@ -180,3 +188,19 @@ INTERNAL_IPS = [
     "127.0.0.1",
     # ...
 ]
+
+EMAIL_HOST = 'smtp.elasticemail.com'
+EMAIL_HOST_USER = 'hoseyn.wanton@gmail.com'
+EMAIL_HOST_PASSWORD = ' '
+EMAIL_PORT = '2525'
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+
+# Password reset settings.
+DJANGO_REST_PASSWORDRESET_TOKEN_CONFIG = {
+    "CLASS": "django_rest_passwordreset.tokens.RandomStringTokenGenerator",
+    "OPTIONS": {
+        "min_length": 6,
+        "max_length": 6
+    }
+}

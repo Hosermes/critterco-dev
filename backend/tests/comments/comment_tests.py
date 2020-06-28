@@ -3,7 +3,8 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
 from rest_framework import status
-from comments.models import Comment
+from apps.comments.models import Comment
+from unittest.mock import MagicMock, patch
 
 COMMENT_URL = reverse('comment-list')
 # COMMENT_DETAIL_URL = reverse('comment-detail', args=comment.pk)
@@ -16,6 +17,7 @@ def create_user(**params):
     return get_user_model().objects.create_user(**params)
 
 
+@patch('backend.celery_app.send_email_task', new=MagicMock())
 class TestPatchComments(TestCase):
     """Tests for comment functions"""
 
@@ -27,7 +29,7 @@ class TestPatchComments(TestCase):
         payload = {
             'content': 'Test 1'
         }
-        create_user(email="foo@test.com", password="testpassword")
+        create_user(email="foo@test.com", password="testpassword", first_name="fooname")
         self.client.login(email="foo@test.com", password="testpassword")
         res = self.client.post(COMMENT_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
@@ -37,9 +39,12 @@ class TestPatchComments(TestCase):
         payload_user = {
             'email': 'foo@test.com',
             'password': 'testpassword',
-            'name': 'bar'
+            'first_name': 'bar'
         }
         res = self.client.post(CREATE_USER_URL, payload_user)
+        u = get_user_model().objects.get(email='foo@test.com')
+        u.is_active = True
+        u.save()
         get_token = self.client.post(TOKEN_URL, payload_user, format='json')
         token = get_token.data['access']
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
@@ -54,9 +59,12 @@ class TestPatchComments(TestCase):
         payload_user = {
             'email': 'foo@test.com',
             'password': 'testpassword',
-            'name': 'bar'
+            'first_name': 'bar'
         }
         self.client.post(CREATE_USER_URL, payload_user)
+        u = get_user_model().objects.get(email='foo@test.com')
+        u.is_active = True
+        u.save()
         get_token = self.client.post(TOKEN_URL, payload_user, format='json')
         token = get_token.data['access']
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
@@ -75,9 +83,12 @@ class TestPatchComments(TestCase):
         payload_user = {
             'email': 'foo@test.com',
             'password': 'testpassword',
-            'name': 'bar'
+            'first_name': 'bar'
         }
         res = self.client.post(CREATE_USER_URL, payload_user)
+        u = get_user_model().objects.get(email='foo@test.com')
+        u.is_active = True
+        u.save()
         get_token = self.client.post(TOKEN_URL, payload_user, format='json')
         token = get_token.data['access']
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
@@ -96,10 +107,13 @@ class TestPatchComments(TestCase):
         payload_user = {
             'email': 'foo@foo.com',
             'password': 'testpassword',
-            'name': 'foo',
+            'first_name': 'foo',
             'username': 'foo'
         }
         res = self.client.post(CREATE_USER_URL, payload_user)
+        u = get_user_model().objects.get(email='foo@foo.com')
+        u.is_active = True
+        u.save()
         get_token = self.client.post(TOKEN_URL, payload_user, format='json')
         token = get_token.data['access']
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
@@ -112,10 +126,13 @@ class TestPatchComments(TestCase):
         payload_user2 = {
             'email': 'bar@bar.com',
             'password': 'testpassword',
-            'name': 'bar',
+            'first_name': 'bar',
             'username': 'bar'
         }
         self.client.post(CREATE_USER_URL, payload_user2)
+        u = get_user_model().objects.get(email='bar@bar.com')
+        u.is_active = True
+        u.save()
         get_token2 = self.client.post(TOKEN_URL, payload_user2, format='json')
         token2 = get_token2.data['access']
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token2)

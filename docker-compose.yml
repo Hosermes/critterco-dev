@@ -16,6 +16,8 @@ services:
       - DB_NAME=${POSTGRES_DB}
       - DB_USER=${POSTGRES_USER}
       - DB_PASS=${POSTGRES_PASSWORD}
+      - BACKEND_SECRET=${BACKEND_SECRET}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
       - TZ=Asia/Tehran
     depends_on:
       - db
@@ -44,7 +46,33 @@ services:
     ports:
       - "6379:6379"
 
+  celery:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: celery
+    environment:
+      - BACKEND_SECRET=${BACKEND_SECRET}
+    command: bash -c 'python3 manage.py watch_celery'
+    volumes:
+      - ./backend:/code
+    depends_on:
+      - db
+      - redis
 
+  flower:
+    image: mher/flower
+    container_name: flower_dev_vet
+    command: flower --url_prefix=flower
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379
+      - FLOWER_PORT=5555
+    ports:
+      - 5555:5555
+    depends_on:
+      - celery
+      - redis
+    
   frontend:
     container_name: frontend
     build:
@@ -53,7 +81,7 @@ services:
       - ./frontend:/app
       - "/app/node_modules"
     ports:
-      - "8081:8080"
+      - "3000:3000"
     depends_on:
       - backend
       
@@ -69,15 +97,15 @@ services:
     depends_on:
           - "redis"
     
-  # pgadmin:
-  #   image: dpage/pgadmin4
-  #   depends_on:
-  #     - db
-  #   ports:
-  #     - 5050:80
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+  pgadmin:
+    image: dpage/pgadmin4
+    depends_on:
+      - db
+    ports:
+      - 5050:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
 
   portainer:
     image: portainer/portainer

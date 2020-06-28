@@ -1,11 +1,12 @@
+import datetime
+from apps.biz.models import Biz, Hours
 from django.urls import reverse
 from django.test import TestCase
 from django.contrib.auth.models import Group
-from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
 from rest_framework import status
-from biz.models import Biz, Hours
-import datetime
+from rest_framework.test import APIClient
+from unittest.mock import MagicMock, patch
 
 BIZ_URL = reverse('biz-list')
 # COMMENT_DETAIL_URL = reverse('comment-detail', args=comment.pk)
@@ -18,6 +19,7 @@ def create_user(**params):
     return get_user_model().objects.create_user(**params)
 
 
+@patch('backend.celery_app.send_email_task', new=MagicMock())
 class TestBizModel(TestCase):
     """Tests for comment functions"""
 
@@ -28,13 +30,16 @@ class TestBizModel(TestCase):
         payload_user = {
             'email': 'foo@foo.com',
             'password': 'testpassword',
-            'name': 'foo',
+            'first_name': 'foo',
             'username': 'foo'
         }
         self.client.post(CREATE_USER_URL, payload_user)
         self.user1_data = get_user_model().objects.get(email="foo@foo.com")
+        self.user1_data.is_active = True
+        self.user1_data.save()
         member_group = Group.objects.get(name="member")
         member_group.user_set.add(self.user1_data)
+        self.user1_data.is_active = True
         get_token1 = self.client.post(TOKEN_URL, payload_user, format='json')
         token1 = get_token1.data['access']
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token1)
