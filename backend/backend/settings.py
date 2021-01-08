@@ -176,11 +176,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
-    "DEFAULT_THROTTLE_RATES": {"anon": "100/day", "user": "1000/day"},
+    "DEFAULT_THROTTLE_RATES": {"anon": "10000/day", "user": "10000/day"},
 }
 
 # IPs and ports allowed for CORS origin.
-CORS_ORIGIN_WHITELIST = ("http://localhost:8080", "http://localhost:8081")
+CORS_ORIGIN_WHITELIST = ("http://localhost:3000", "http://localhost:3001")
 
 # Internal IPs.
 INTERNAL_IPS = [
@@ -204,3 +204,9 @@ DJANGO_REST_PASSWORDRESET_TOKEN_CONFIG = {
         "max_length": 6
     }
 }
+
+# frontend error {temp}
+
+CSRF_TRUSTED_ORIGINS = [
+    'change.allowed.com',
+]
